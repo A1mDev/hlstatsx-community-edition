@@ -36,11 +36,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 For support and installation notes visit http://www.hlxcommunity.com
 */
 
-
-if (!defined('IN_HLSTATS'))
-{
-	die('Do not access this file directly.');
-}
+    if (!defined('IN_HLSTATS')) {
+        die('Do not access this file directly.');
+    }
 
 if ( empty($game) )
 {
@@ -70,19 +68,19 @@ class Auth
 
 	var $userdata = array();
 
-	function Auth()
+	function __construct()
 	{
 		//@session_start();
 
-		if (valid_request($_POST['authusername'], 0))
+		if (valid_request($_POST['authusername'], false))
 		{
-			$this->username = valid_request($_POST['authusername'], 0);
-			$this->password = valid_request($_POST['authpassword'], 0);
-			$this->savepass = valid_request($_POST['authsavepass'], 0);
+			$this->username = valid_request($_POST['authusername'], false);
+			$this->password = valid_request($_POST['authpassword'], false);
+			$this->savepass = valid_request($_POST['authsavepass'], false);
 			$this->sessionStart = 0;
 
-	
 			# clear POST vars so as not to confuse the receiving page
+			unset($_POST);
 			$_POST = array();
 
 			$this->session = false;
@@ -142,6 +140,7 @@ class Auth
 
 			$this->userdata = $db->fetch_array();
 			$db->free_result();
+
 			if (hash("ripemd128", $this->password) == $this->userdata["password"])
 			{
 				// The username and the password are OK
@@ -241,7 +240,6 @@ class Auth
 	}
 }
 
-
 class AdminTask
 {
 	var $title = '';
@@ -249,7 +247,7 @@ class AdminTask
 	var $type = '';
 	var $description = '';
 
-	function AdminTask($title, $acclevel, $type = 'general', $description = '', $group = '')
+	function __construct($title, $acclevel, $type = 'general', $description = '', $group = '')
 	{
 		$this->title = $title;
 		$this->acclevel = $acclevel;
@@ -258,7 +256,6 @@ class AdminTask
 		$this->group = $group;
 	}
 }
-
 
 class EditList
 {
@@ -278,7 +275,7 @@ class EditList
 	var $helpKey;
 	var $helpDIV;
 
-	function EditList($keycol, $table, $icon, $showid = true, $drawDetailsLink = false, $DetailsLink = '', $deleteCallback = null)
+	function __construct($keycol, $table, $icon, $showid = true, $drawDetailsLink = false, $DetailsLink = '', $deleteCallback = null)
 	{
 		$this->keycol = $keycol;
 		$this->table = $table;
@@ -321,7 +318,6 @@ class EditList
 			$returnstr .= "}\n";
 			$returnstr .= "</script>\n";
 
-
 			$returnstr .= '<div class="helpwindow" ID="' . $this->helpDIV . '">No help text available</div>';
 
 		}
@@ -333,9 +329,8 @@ class EditList
 		global $db;
 
 		$okcols = 0;
-		foreach ($this->columns as $col)
-		{
-			$value = mystripslashes($_POST["new_$col->name"]);
+		foreach ($this->columns as $col) {
+			$value = (!empty($_POST["new_$col->name"])) ? mystripslashes($_POST["new_$col->name"]) : '';
 			//  legacy code that should have never been here. these should never be html-escaped in the db.
 			//  if there's a problem with removing this, it needs to be fixed on the web/display end
 			//  -psychonic
@@ -367,7 +362,7 @@ class EditList
 					{
 						$qvals .= ', ';
 					}
-					
+
 					if ($col->type == 'password' && $col->name != 'rcon_password')
 					{
 						$value = hash("ripemd128", $value, );
@@ -413,12 +408,11 @@ class EditList
 		
 		foreach ($_POST['rows'] as $row)
 		{
-			if ($_POST[$row . '_delete'])
-			{
-				if ( !empty($this->deleteCallback) && is_callable($this->deleteCallback) )
-				{
+			if (!empty($_POST[$row . '_delete'])) {
+				if (!empty($this->deleteCallback) && is_callable($this->deleteCallback)) {
 					call_user_func($this->deleteCallback, $row);
 				}
+
 				$db->query("
 					DELETE FROM
 						$this->table
@@ -439,7 +433,7 @@ class EditList
 						continue;
 					}
 
-					$value = mystripslashes($_POST[$row . "_" . $col->name]);
+					$value = (!empty($_POST[$row . "_" . $col->name])) ? mystripslashes($_POST[$row . "_" . $col->name]) : null;
 					
 					//  legacy code that should have never been here. these should never be html-escaped in the db.
 					//  if there's a problem with removing this, it needs to be fixed on the web/display end
@@ -497,14 +491,11 @@ class EditList
 			}
 		}
 
-		if ($this->error())
-		{
+		if ($this->error()) {
 			return false;
 		}
-		else
-		{
-			return true;
-		}
+
+        return true;
 	}
 
 	function draw($result, $draw_new = true)
@@ -623,7 +614,6 @@ class EditList
 </table><br /><br />
 <?php
 	}
-
 
 	function drawfields($rowdata = array(), $new = false, $stripslashes = false)
 	{
@@ -768,10 +758,11 @@ class EditList
 					/* else fall through to default */
 
 				default:
-					if ($col->type == 'password')
-					{
+					$onclick = '';
+					if ($col->type == 'password') {
 						$onclick = " onclick=\"if (this.value == '(encrypted)') this.value='';\"";
 					}
+
 					if ($col->datasource != '' && !isset($rowdata[$col->name]))
 					{
 						$value = $col->datasource;
@@ -782,12 +773,13 @@ class EditList
 					}
 
 					$onClick = '';
-					if ($this->helpKey != '')
-					{
+					if (!empty($this->helpKey) && !empty($rowdata[$this->helpKey])) {
 						$onClick = "onmouseover=\"javascript:showHelp('" . strtolower($rowdata[$this->helpKey]) . "')\" onmouseout=\"javascript:hideHelp()\"";
 					}
 
-					echo "<input $onClick type=\"text\" name=\"" . $keyval . "_$col->name\" size=$col->width " . "value=\"" . htmlentities(html_entity_decode($value), ENT_COMPAT, 'UTF-8') . "\" class=\"textbox\"" . " maxlength=\"$col->maxlength\"$onclick />";
+					$input_value = (!empty($value)) ? htmlentities(html_entity_decode($value), ENT_COMPAT, 'UTF-8') : "";
+
+					echo "<input $onClick type=\"text\" name=\"" . $keyval . "_$col->name\" size=$col->width " . "value=\"" . $input_value . "\" class=\"textbox\"" . " maxlength=\"$col->maxlength\"$onclick />";
 // doing htmlentities on something that we just decoded is because we need to encode them when we fill out a form, but we don't want to double encode them (some items like rcon are not encoded at all - but server names are)
 			}
 
@@ -823,7 +815,7 @@ class EditListColumn
 	var $datasource;
 	var $maxlength;
 
-	function EditListColumn($name, $title, $width = 20, $required = false, $type = 'text', $datasource = '', $maxlength = 0)
+	function __construct($name, $title, $width = 20, $required = false, $type = 'text', $datasource = '', $maxlength = 0)
 	{
 		$this->name = $name;
 		$this->title = $title;
@@ -835,7 +827,6 @@ class EditListColumn
 	}
 }
 
-
 class PropertyPage
 {
 	var $table;
@@ -843,7 +834,7 @@ class PropertyPage
 	var $keyval;
 	var $propertygroups = array();
 
-	function PropertyPage($table, $keycol, $keyval, $groups)
+	function __construct($table, $keycol, $keyval, $groups)
 	{
 		$this->table = $table;
 		$this->keycol = $keycol;
@@ -899,7 +890,7 @@ class PropertyPage_Group
 	var $title = '';
 	var $properties = array();
 
-	function PropertyPage_Group($title, $properties)
+	function __construct($title, $properties)
 	{
 		$this->title = $title;
 		$this->properties = $properties;
@@ -934,7 +925,7 @@ class PropertyPage_Property
 	var $title;
 	var $type;
 
-	function PropertyPage_Property($name, $title, $type, $datasource = '')
+	function __construct($name, $title, $type, $datasource = '')
 	{
 		$this->name = $name;
 		$this->title = $title;
@@ -1012,8 +1003,8 @@ if($auth->ok===false)
 
 pageHeader(array('Admin'), array('Admin' => ''));
 
-$selTask = valid_request($_GET['task'], 0);
-$selGame = valid_request($_GET['game'], 0);
+$selTask = valid_request($_GET['task'], false);
+$selGame = valid_request($_GET['game'], false);
 ?>
 
 <table width="100%" align="center" border="0" cellspacing="0" cellpadding="0">
@@ -1066,7 +1057,7 @@ $admintasks['tools_settings_copy'] = new AdminTask('Duplicate Game settings', 80
 
 
 // Show Tool
-if ($admintasks[$selTask] && ($admintasks[$selTask]->type == 'tool' || $admintasks[$selTask]->type == 'subtool'))
+if (!empty($admintasks[$selTask]) && ($admintasks[$selTask]->type == 'tool' || $admintasks[$selTask]->type == 'subtool'))
 {
 	$task = $admintasks[$selTask];
 
