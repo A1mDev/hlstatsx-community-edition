@@ -157,6 +157,7 @@ For support and installation notes visit http://www.hlxcommunity.com
 	}
 	
 	// Determine if we should show SourceBans links/Forum links
+	$extratabs = NULL;
 	if ($g_options['sourcebans_address'] && file_exists($iconpath . "/title-sourcebans.png")) {
 		$extratabs .= "<li><a href=\"". $g_options['sourcebans_address'] . "\" target=\"_blank\"><img src=\"" . $iconpath . "/title-sourcebans.png\" alt=\"SourceBans\" /></a></li>\n";
 	}
