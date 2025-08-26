@@ -351,7 +351,7 @@ For support and installation notes visit http://www.hlxcommunity.com
 			{
 				$minEvent = explode("-", $dates[$rank_type-1]['eventTime']);
 				$minEvent = mktime(0, 0, 0, $minEvent[1], $minEvent[2], $minEvent[0]);
-				$maxEvent = $minEvent + 86400;
+				$maxEvent = $minEvent;
 			}
 			$result = $db->query
 			("
