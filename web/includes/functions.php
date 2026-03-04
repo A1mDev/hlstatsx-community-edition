@@ -228,7 +228,6 @@ function error(string $message, bool $exit = true) : void
     }
 }
 
-
 //
 // string makeQueryString (string key, string value, [array notkeys])
 //
@@ -278,6 +277,8 @@ function pageHeader($title = '', $location = '')
 	global $db, $g_options;
 	if ( defined('PAGE') && PAGE == 'HLSTATS' )
 		include (PAGE_PATH . '/header.php');
+	elseif ( defined('PAGE') && PAGE == 'INGAME' )
+		include (PAGE_PATH . '/ingame/header.php');
 }
 
 
@@ -297,6 +298,8 @@ function pageFooter()
 	global $g_options;
 	if ( defined('PAGE') && PAGE == 'HLSTATS' )
 		include (PAGE_PATH . '/footer.php');
+	elseif ( defined('PAGE') && PAGE == 'INGAME' )
+		include (PAGE_PATH . '/ingame/footer.php');
 }
 
 /**
@@ -460,34 +463,50 @@ function getLink($url, $type = 'http://', $target = '_blank')
 }
 
 /**
- * getEmailLink()
- * 
- * @param string $email
- * @param integer $maxlength
- * @return string Formatted email tag
+ * Generate a safe mailto link for an email address.
+ * Validates the email, trims it, blocks dangerous characters,
+ * converts to lowercase, and safely truncates display text.
+ *
+ * Note: does not support ASCII characters.
+ *
+ * @param string|null $email The email address to link
+ * @param int $maxLength Maximum length of the displayed email
+ * @return string HTML link or empty string if invalid
  */
 function getEmailLink(?string $email, int $maxLength = 40) : string
 {
-    if (empty($email)) {
-        return '';
-    }
+	// 1. Return empty string if email is null or empty
+	if (!$email) {
+		return '';
+	}
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        return '';
-    }
+	// 2. Remove leading/trailing whitespace
+	$email = trim($email);
 
-    $display = $email;
-    if (mb_strlen($email, 'UTF-8') > $maxLength) {
-        $display = mb_substr($email, 0, $maxLength - 3, 'UTF-8');
-        $display .= '...';
-    }
+	// 3. Validate email format using PHP filter
+	if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		return '';
+	}
 
-    $url = "mailto:{$email}";
-    $link = '<a href="' . eHtml($url) . '">';
-    $link .= eHtml($display);
-    $link .= '</a>';
+	// 4. Block dangerous characters for mailto and HTML
+	// Disallow: double/single quotes, <, >, ?, and whitespace
+	if (preg_match('/[?"\'<>\s]/', $email)) {
+		return '';
+	}
 
-    return $link;
+	// 5. Normalize email to lowercase for consistent display
+	$email = mb_strtolower($email, 'UTF-8');
+
+	// 6. Trim the email for display if it exceeds max length
+	// mb_strimwidth ensures multibyte safe truncation
+	$display = mb_strimwidth($email, 0, $maxLength, '...', 'UTF-8');
+
+	// 7. Construct the mailto URL
+	$url = 'mailto:' . $email;
+
+	// 8. Return safe HTML link
+	// eHtml should escape HTML special characters to prevent XSS
+	return sprintf('<a href="%s">%s</a>', eHtml($url), eHtml($display));
 }
 
 /**
@@ -583,5 +602,3 @@ function hex2rgb($hexVal = '')
 	$arrTmp = array_map('hexdec', $arrTmp);
 	return array('red' => $arrTmp[0], 'green' => $arrTmp[1], 'blue' => $arrTmp[2]);
 }
-
-?>
