@@ -181,11 +181,11 @@ For support and installation notes visit http://www.hlxcommunity.com
 			if ($g_options['map_dlurl'])
 			{
 				$map_dlurl = str_replace("%MAP%", $map, $g_options['map_dlurl']);
-				$map_dlurl = str_replace("%GAME%", $game, $map_dlurl);
-				$mapdlheader = @get_headers($map_dlurl);
-				if (preg_match("|200|", $mapdlheader[0])) {
-					echo "<p><a href=\"$map_dlurl\">Download this map...</a></p>";
-				}
+				$map_dlurl = str_replace("%GAME%", $realgame, $map_dlurl);
+				echo "<p class='map-dl'><a href=\"$map_dlurl\" class='map-download-btn'><b>Download this map</b>
+				<span class='fSmall'>If clicking does not work, right-click this link,<br/>
+				choose 'copy link address', then open a<br/>
+				new tab and paste the URL</span></p></a>";
 			}
 
 			if ($heatmap)

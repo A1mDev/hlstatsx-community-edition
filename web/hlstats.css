@@ -262,3 +262,33 @@ nav{
     text-decoration:none !important;
     white-space:nowrap;
 }
+
+.map-dl {
+	background-color: #f0f0f0;
+	border: 1px solid #ccc;
+	padding: 10px;
+	margin: 10px 0;
+	border-radius: 4px;
+	text-align: center;
+}
+
+.map-dl a {
+	word-break: break-all;
+}
+
+.map-download-btn {
+	display: inline-block;
+	padding: 8px 16px;
+	background-color: #4a90d9;
+	color: white !important;
+	text-decoration: none;
+	border-radius: 4px;
+	font-weight: bold;
+	transition: all 0.2s ease;
+}
+
+.map-download-btn:hover {
+	background-color: #6ba3e0;
+	transform: scale(1.05);
+	box-shadow: 0 4px 12px rgba(74, 144, 217, 0.4);
+}
