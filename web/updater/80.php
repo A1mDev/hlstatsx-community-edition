@@ -18,4 +18,3 @@
     $db->query("ALTER TABLE `hlstats_Players` MODIFY `country` VARCHAR(128)");
     $db->query("ALTER TABLE `hlstats_Players` MODIFY `state` VARCHAR(128)");
     $db->query("ALTER TABLE `hlstats_Players` MODIFY `city` VARCHAR(128)");
-?>
