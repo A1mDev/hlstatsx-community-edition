@@ -42,6 +42,16 @@ use Syntax::Keyword::Try;
 
 do "$::opt_libdir/HLstats_GameConstants.plib";
 
+# Cache player counts by game for 5 seconds.
+# GetPlayerCount() uses this cache to avoid executing the same expensive
+# COUNT(*) query on hlstats_Players for every server in flushDB().
+# Without the cache, every server can execute this query every second,
+# resulting in hundreds of identical queries per second with many servers.
+# With the cache, the query runs at most once every 5 seconds per game,
+# significantly reducing database load on the large hlstats_Players table.
+my %PlayerCountCache;
+my $PlayerCountCacheTTL = 5;
+
 sub new
 {
 	my ($class_name, $serverId, $address, $port, $server_name, $rcon_pass, $game, $publicaddress, $gameengine, $realgame, $maxplayers) = @_;
@@ -1099,16 +1109,10 @@ sub flushDB
 			);
 		($self->{total_kills}, $self->{total_headshots}, $self->{total_suicides},$self->{total_rounds},$self->{total_shots},$self->{total_hits}) = $result->fetchrow_array();
 		$result->finish;
-	}   
+	}
 
-	my $result = &::execCached(
-		"get_player_count",
-		"SELECT count(*) as players FROM hlstats_Players WHERE game=? and hideranking<>2",
-		&::quoteSQL($self->{game}));
-	$self->{players} = $result->fetchrow_array();
-	$result->finish;
-	
-	
+	$self->{players} = $self->GetPlayerCount();
+
 	# Update player details
 	my $query = "
 		UPDATE
@@ -1190,6 +1194,36 @@ sub flushDB
 	$self->set("ts_hits", 0);
 	$self->set("map_changes", 0);
 	$self->{needsupdate} = 0;
+}
+
+sub GetPlayerCount
+{
+	my ($self) = @_;
+
+	my $game = $self->{game};
+	my $now = time();
+
+	if (exists $PlayerCountCache{$game}
+		&& ($now - $PlayerCountCache{$game}{time}) < $PlayerCountCacheTTL)
+	{
+		return $PlayerCountCache{$game}{count};
+	}
+
+	my $result = &::execCached(
+		"get_player_count",
+		"SELECT COUNT(*) as players FROM hlstats_Players WHERE game=? AND hideranking<>2",
+		&::quoteSQL($game)
+	);
+
+	my ($count) = $result->fetchrow_array();
+	$result->finish;
+
+	$PlayerCountCache{$game} = {
+		count => $count,
+		time  => $now
+	};
+
+	return $count;
 }
 
 sub flush_player_count
