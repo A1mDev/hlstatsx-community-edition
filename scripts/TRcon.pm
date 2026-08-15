@@ -219,7 +219,7 @@ sub recieve_rcon
   my $r_socket  = $self->{"rcon_socket"};
   my $server    = $self->{"server_object"};
   my $auth      = $self->{"auth"};
-  my $packet_id = $self->{"packet_id"};
+  #my $packet_id = $self->{"packet_id"};
   
   if (($r_socket) && ($r_socket->connected() )) {
     if(IO::Select->new($r_socket)->can_read($TIMEOUT)) {  # $TIMEOUT seconds timeout
