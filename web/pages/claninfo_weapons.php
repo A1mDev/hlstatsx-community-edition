@@ -568,32 +568,67 @@ if ($db->num_rows($result) != 0)
 		$result = $db->query($query);
 
 ?>
-	function switch_weapon(weapon) {
-		if (document.embeds && document.embeds.hitbox) {
-			if (document.embeds.hitbox.LoadMovie) {
-				document.embeds.hitbox.LoadMovie(0, '<?php echo IMAGE_PATH; ?>/hitbox.swf?wname='+data_array[weapon][0]
-					+'&head='+data_array[weapon][1]+'&rightarm='+data_array[weapon][2]
-					+'&leftarm='+data_array[weapon][3]+'&chest='+data_array[weapon][4]
-					+'&stomach='+data_array[weapon][5]+'&rightleg='+data_array[weapon][6]
-					+'&leftleg='+data_array[weapon][7]+'&model='+data_array[weapon][8]
-					+'&numcolor_num=#<?php echo $g_options['graphtxt_load'] ?>&numcolor_pct=#<?php echo $g_options['graphtxt_load'] ?>&linecolor=#<?php echo $g_options['graphtxt_load'] ?>&barcolor=#FFFFFF&barbackground=#000000&textcolor=#FFFFFF&captioncolor=#FFFFFF&textcolor_total=#FFFFFF');
-			}
-		} else if (document.getElementById) { 
-			var obj = document.getElementById('hitbox'); 
-			if (typeof obj.LoadMovie != 'undefined') { 
-				obj.LoadMovie(0, '<?php echo IMAGE_PATH; ?>/hitbox.swf?wname='+data_array[weapon][0]
-					+'&head='+data_array[weapon][1]+'&rightarm='+data_array[weapon][2]
-					+'&leftarm='+data_array[weapon][3]+'&chest='+data_array[weapon][4]
-					+'&stomach='+data_array[weapon][5]+'&rightleg='+data_array[weapon][6]
-					+'&leftleg='+data_array[weapon][7]+'&model='+data_array[weapon][8]
-					+'&numcolor_num=#<?php echo $g_options['graphtxt_load'] ?>&numcolor_pct=#<?php echo $g_options['graphtxt_load'] ?>&linecolor=#<?php echo $g_options['graphtxt_load'] ?>&barcolor=#FFFFFF&barbackground=#000000&textcolor=#FFFFFF&captioncolor=#FFFFFF&textcolor_total=#FFFFFF');
-			}
+	function hlx_hitbox_ensure(cb) {
+		if (window.HLXHitboxModern) { cb(); return; }
+		if (window.__hlxHitboxLoading) {
+			window.__hlxHitboxLoading.push(cb);
+			return;
 		}
+		window.__hlxHitboxLoading = [cb];
+		var s = document.createElement('script');
+		s.src = '<?php echo INCLUDE_PATH; ?>/js/hitbox-modern.js';
+		s.onload = function () {
+			var queue = window.__hlxHitboxLoading || [];
+			window.__hlxHitboxLoading = null;
+			for (var i = 0; i < queue.length; i++) {
+				try { queue[i](); } catch (e) {}
+			}
+		};
+		s.onerror = function () { window.__hlxHitboxLoading = null; };
+		(document.head || document.getElementsByTagName('head')[0] || document.documentElement).appendChild(s);
+	}
+	function switch_weapon(weapon) {
+		if (!data_array[weapon]) {
+			return;
+		}
+		hlx_hitbox_ensure(function () {
+			var data = data_array[weapon];
+			window.HLXHitboxModern.render('hitbox-modern', {
+				wname: data[0],
+				head: data[1],
+				leftarm: data[3],
+				rightarm: data[2],
+				chest: data[4],
+				stomach: data[5],
+				leftleg: data[7],
+				rightleg: data[6],
+				model: data[8]
+			}, {
+				imageBase: '<?php echo IMAGE_PATH; ?>',
+				numcolor_num: '#<?php echo $g_options['graphtxt_load']; ?>',
+				numcolor_pct: '#<?php echo $g_options['graphtxt_load']; ?>',
+				linecolor: '#<?php echo $g_options['graphtxt_load']; ?>',
+				barcolor: '#FFFFFF',
+				barbackground: '#000000',
+				textcolor: '#FFFFFF',
+				captioncolor: '#FFFFFF',
+				textcolor_total: '#FFFFFF'
+			});
+		});
+	}
+	function init_hitbox() {
+		switch_weapon('All Weapons');
+	}
+	if (document.getElementById('hitbox-modern')) {
+		init_hitbox();
+	} else if (window.addEventListener) {
+		window.addEventListener('load', init_hitbox, false);
+	} else if (window.attachEvent) {
+		window.attachEvent('onload', init_hitbox);
 	}
 </script>
 <?php
 		$tblWeaponstats2->draw($result, $db->num_rows($result), 100);
-		$flashlink = IMAGE_PATH.'/hitbox.swf?wname=All+Weapons&amp;head='.$weapon_data['total']['head'].'&amp;rightarm='.$weapon_data['total']['leftarm'].'&amp;leftarm='.$weapon_data['total']['rightarm'].'&amp;chest='.$weapon_data['total']['chest'].'&amp;stomach='.$weapon_data['total']['stomach'].'&amp;rightleg='.$weapon_data['total']['leftleg'].'&amp;leftleg='.$weapon_data['total']['rightleg'].'&amp;model='.$start_model.'&amp;numcolor_num=#'.$g_options['graphtxt_load'].'&amp;numcolor_pct=#'.$g_options['graphtxt_load'].'&amp;linecolor=#'.$g_options['graphtxt_load'].'&amp;barcolor=#FFFFFF&amp;barbackground=#000000&amp;textcolor=#FFFFFF&amp;captioncolor=#FFFFFF&amp;textcolor_total=#FFFFFF';
 ?>
 </div>
 	<div style="float:right;vertical-align:top;width:480px;">
@@ -603,13 +638,7 @@ if ($db->num_rows($result) != 0)
 			</tr>
 			<tr class="bg1">
 				<td style="text-align:center;">
-					<object width="470" height="360" align="middle" id="hitbox" data="<?php echo $flashlink; ?>" type="application/x-shockwave-flash">
-						<param name="movie" value="<?php echo $flashlink; ?>" />
-						<param name="quality" value="high" />
-						<param name="wmode" value="opaque" />
-						<param name="bgcolor" value="#<?php echo $g_options['graphbg_load'] ?>" />
-						The hitbox display requires <a href="http://www.adobe.com" target="_blank">Adobe Flash Player</a> to view.
-					</object>
+					<div id="hitbox-modern" style="width:470px;height:360px;margin:0 auto;background:#<?php echo $g_options['graphbg_load']; ?>;"></div>
 				</td>
 			</tr>
 			<tr class="bg2">
