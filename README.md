@@ -23,7 +23,20 @@ a PHP frontend.
 
 ### :book: Documentation
 * https://github.com/NomisCZ/hlstatsx-community-edition/wiki 🚧 Wiki - work in progress 🚧
+### Daemon timestamp validation
+
+Invalid calendar/time fields are reported as `E998 MALFORMED TIMESTAMP` and
+discarded without terminating the daemon. Valid timestamp behavior is unchanged.
+Run the standalone core-Perl regressions with `prove scripts/t/timestamp.t`;
+no database or running game server is required.
+
+Log dates remain `MM/DD/YYYY` by default. For a day-first server, set its
+`LogDateFormat` parameter in `hlstats_Servers_Config` to `DD/MM/YYYY` and reload
+the daemon. `MM/DD/YYYY` is also accepted explicitly. This is per server:
+ambiguous dates are never guessed and other servers keep their existing format.
+Invalid format settings are reported and their packets rejected. No database
+schema change is required.
+
 ### :speech_balloon: Help
 *  https://forums.alliedmods.net/forumdisplay.php?f=156
 ---
-
