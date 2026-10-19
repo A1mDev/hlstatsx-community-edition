@@ -491,12 +491,12 @@ sub doEvent_EnterGame
 	my $desc;
 	my $player = lookupPlayer($s_addr, $playerId, $playerUniqueId);
 	my $playerstr = &getPlayerInfoString($player, $playerId);
-	my $isbot = $player->{is_bot};
-	
+
     my $min_players_rank  = $g_servers{$s_addr}->{min_players_rank};
-    
+
 	if ($player)
 	{
+		my $isbot = $player->{is_bot};
 		if ($g_mode eq "Normal" && $isbot == 0 && $player->{userid} > 0)
 		{
 			$hostname = &resolveIp($player->{address});
